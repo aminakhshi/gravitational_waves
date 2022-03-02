@@ -484,6 +484,9 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
 
 def match_pair(event_name, data, fs_ref=4096.):
 
+    # local_path = ?
+    # lines 787, 901, 902, 1023, 1039
+
     O2_source = "SoumiEtAl"
     # O2_source = "LIGO"
 
