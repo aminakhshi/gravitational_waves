@@ -2,7 +2,7 @@ import numpy as np
 import h5py as hf
 import pycbc.waveform as wf
 import matplotlib.pyplot as plt
-from utils import p_corr
+from .utils import p_corr
 import pickle
 import tarfile
 import wget
@@ -10,7 +10,7 @@ import copy
 import os
 from pycbc import pnutils
 
-def match_pair_v1(event_name, data, fs_ref=4096.):
+def match_pair_v1(event_name, data, fs_ref=4096., save_out = True, local_path = None):
     """
 
     :param event_name:
@@ -23,12 +23,18 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
     second_run = ['GW170104', 'GW170608', 'GW170729',
                   'GW170809', 'GW170814', 'GW170818', 'GW170823']
     third_run = ['GW190412', 'GW190814', 'GW190521']
-
-    # download source files
-    get_path = os.getcwd()
     # lines 787, 901, 902, 1023, 1039
 
-    with open(os.path.join(get_path, "linksDict"), "rb") as file:
+    if save_out:
+        if local_path:
+            event_folder = local_path
+        else:
+            event_folder = 'results/{}'.format(event_name)
+            if_exist = os.path.isdir(event_folder)
+            if not if_exist:
+                os.makedirs(event_folder)
+                
+    with open("linksDict", "rb") as file:
         get_link = pickle.load(file)
     link_ = get_link[event_name]
     if event_name in third_run:
@@ -257,7 +263,7 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
               '\nL1_corr: ' + str(corr_arr_L[max_corr_pos_L]) +
               '\ndelay: ' + str(delay_))
 
-    np.savetxt(event_name + '_postMatch.txt', to_save)
+    np.savetxt(os.path.join(event_folder,event_name + '_postMatch.txt'), to_save)
 
     # # #
     # illustrating the best match:
@@ -345,8 +351,8 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
     waveform_H = hp.data
     waveform_L = hc.data
 
-    np.savetxt('Best_fit_waveform_H_' + event_name + '.txt', waveform_H)
-    np.savetxt('Best_fit_waveform_L_' + event_name + '.txt', waveform_L)
+    np.savetxt(os.path.join(event_folder,'Best_fit_waveform_H_' + event_name + '.txt'), waveform_H)
+    np.savetxt(os.path.join(event_folder,'Best_fit_waveform_L_' + event_name + '.txt'), waveform_L)
 
     # zeropadding waveforms to ensure no size-related issues!
     waveform_H = np.concatenate((waveform_H, np.zeros([5000, ])))
@@ -470,7 +476,7 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
     plt.plot(t, y, label="extraction")
     plt.title(event_name + '_H1, corr: ' + str(cr_H))
     plt.legend()
-    plt.savefig(event_name + '_H1_bestMatchIllustration.png')
+    plt.savefig(os.path.join(event_folder,event_name + '_H1_bestMatchIllustration.png'))
 
     center_L = center - tau_L.item()  # =center for the previous runs
     x = waveform_L_[int(center_L - np.fix(corr_frame_size / 2)):
@@ -486,11 +492,11 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
     plt.plot(t, y, label="extraction")
     plt.title(event_name + '_L1, corr: ' + str(cr_L))
     plt.legend()
-    plt.savefig(event_name + '_L1_bestMatchIllustration.png')
+    plt.savefig(os.path.join(event_folder,event_name + '_L1_bestMatchIllustration.png'))
 
     return to_save
 
-def match_pair(event_name, data, fs_ref=4096.):
+def match_pair(event_name, data, fs_ref=4096., save_out = True, local_path = None):
     """
 
     :param event_name:
@@ -509,7 +515,16 @@ def match_pair(event_name, data, fs_ref=4096.):
     second_run = ['GW170104', 'GW170608', 'GW170729',
                   'GW170809', 'GW170814', 'GW170818', 'GW170823']
     third_run = ['GW190412', 'GW190814', 'GW190521']
-
+    
+    if save_out:
+        if local_path:
+            event_folder = local_path
+        else:
+            event_folder = 'results/{}'.format(event_name)
+            if_exist = os.path.isdir(event_folder)
+            if not if_exist:
+                os.makedirs(event_folder)
+                
     # download source files
     with open("linksDict", "rb") as file:
         get_link = pickle.load(file)
@@ -639,7 +654,7 @@ def match_pair(event_name, data, fs_ref=4096.):
             if event_name in first_run:
                 zip_obj_ = zip(variables_, values_)
                 dict_ = dict(zip_obj_)
-                polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
+                polar_to_cart = pnutils.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
                                                                     mass2=dict_['m2_detector_frame_Msun'],
                                                                     f_ref=10,
                                                                     thetajn=np.arccos(dict_['costheta_jn']),
@@ -665,7 +680,7 @@ def match_pair(event_name, data, fs_ref=4096.):
                 dict_ = dict(zip_obj_)
                 if O2_source == "LIGO":
                     # LIGO:
-                    polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
+                    polar_to_cart =pnutils.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
                                                                         mass2=dict_['m2_detector_frame_Msun'],
                                                                         f_ref=10,
                                                                         thetajn=np.arccos(dict_['costheta_jn']),
@@ -688,7 +703,7 @@ def match_pair(event_name, data, fs_ref=4096.):
 
                 elif O2_source == "SoumiEtAl":
                     # Soumi et al:
-                    polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['mass1'],
+                    polar_to_cart = pnutils.jframe_to_l0frame(mass1=dict_['mass1'],
                                                                         mass2=dict_['mass2'],
                                                                         f_ref=10,
                                                                         thetajn=dict_['inclination'],
@@ -800,7 +815,7 @@ def match_pair(event_name, data, fs_ref=4096.):
             print('H1_corr: ' + str(corr_arr_H[max_corr_pos_H]) +
                   '\nL1_corr: ' + str(corr_arr_L[max_corr_pos_L]))
 
-    np.savetxt(event_name + '_postMatch.txt', to_save)
+    np.savetxt(os.path.join(event_folder,event_name + '_postMatch.txt'), to_save)
 
     # # #
     # illustrating the best match:
@@ -821,7 +836,7 @@ def match_pair(event_name, data, fs_ref=4096.):
     if event_name in first_run:
         zip_obj_ = zip(variables_, values_)
         dict_ = dict(zip_obj_)
-        polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
+        polar_to_cart = pnutils.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
                                                             mass2=dict_['m2_detector_frame_Msun'],
                                                             f_ref=10,
                                                             thetajn=np.arccos(dict_['costheta_jn']),
@@ -847,7 +862,7 @@ def match_pair(event_name, data, fs_ref=4096.):
         dict_ = dict(zip_obj_)
         if O2_source == "LIGO":
             # LIGO:
-            polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
+            polar_to_cart = pnutils.jframe_to_l0frame(mass1=dict_['m1_detector_frame_Msun'],
                                                                 mass2=dict_['m2_detector_frame_Msun'],
                                                                 f_ref=10,
                                                                 thetajn=np.arccos(dict_['costheta_jn']),
@@ -870,7 +885,7 @@ def match_pair(event_name, data, fs_ref=4096.):
 
         elif O2_source == "SoumiEtAl":
             # Soumi et al:
-            polar_to_cart = wf.waveform_modes.jframe_to_l0frame(mass1=dict_['mass1'],
+            polar_to_cart = pnutils.jframe_to_l0frame(mass1=dict_['mass1'],
                                                                 mass2=dict_['mass2'],
                                                                 f_ref=10,
                                                                 thetajn=dict_['inclination'],
@@ -914,8 +929,8 @@ def match_pair(event_name, data, fs_ref=4096.):
     # waveform_H = hp.data
     # waveform_L = hp.data
 
-    np.savetxt('Best_fit_waveform_H' + event_name + '.txt', waveform_H)
-    np.savetxt('Best_fit_waveform_L' + event_name + '.txt', waveform_L)
+    np.savetxt(os.path.join(event_folder,'Best_fit_waveform_H' + event_name + '.txt'), waveform_H)
+    np.savetxt(os.path.join(event_folder,'Best_fit_waveform_L' + event_name + '.txt'), waveform_L)
 
     # zeropadding waveforms to ensure no size-related issues!
     waveform_H = np.concatenate((waveform_H, np.zeros([5000, ])))
@@ -1036,7 +1051,7 @@ def match_pair(event_name, data, fs_ref=4096.):
     plt.plot(t, y, label="extraction")
     plt.title(event_name + '_H1, corr: ' + str(cr_H))
     plt.legend()
-    plt.savefig(event_name + '_H1_bestMatchIllustration.png')
+    plt.savefig(os.path.join(event_folder,event_name + '_H1_bestMatchIllustration.png'))
 
     center_L = center - tau_L.item()  # =center for the previous runs
     x = waveform_L_[int(center_L - np.fix(corr_frame_size / 2)):
@@ -1052,6 +1067,6 @@ def match_pair(event_name, data, fs_ref=4096.):
     plt.plot(t, y, label="extraction")
     plt.title(event_name + '_L1, corr: ' + str(cr_L))
     plt.legend()
-    plt.savefig(event_name + '_L1_bestMatchIllustration.png')
+    plt.savefig(os.path.join(event_folder,event_name + '_L1_bestMatchIllustration.png'))
 
     return to_save

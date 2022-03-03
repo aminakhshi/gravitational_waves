@@ -7,10 +7,10 @@ from common.wienerseries import Wiener_class
 from common.utils import *        
 from common.get_extraction import wiener_filter
 
-from common.corr_analysis import match_pair
+from common.corr_analysis import match_pair_v1
 
 
-merger_name = 'GW150914'
+merger_name = 'GW170814'
 
 data = gwseries(merger_name = merger_name)
 data = Wiener_class(data, fs = None, nfft = None, nperseg = None, noverlap = None, 
@@ -58,15 +58,9 @@ events_ = dict(zip(events_key, events_val))
 ###
 strain_file_name = events_[merger_name][0]
 file_to_eval = np.genfromtxt(f'./results/{strain_file_name}')
-out_ = match_pair(merger_name, file_to_eval)
+out_ = match_pair_v1(merger_name, file_to_eval)
 # out_ = match(event_name, out)
 
-# tau_max=0.02;
-# t_vec = np.arange(-np.fix(tau_max*fs).astype(int),np.fix(tau_max*fs).astype(int))/fs
-# for key, tau in enumerate((t_vec*fs)):
-#     [corr,corr_err]=p_corr(data_mat(:,1),data_mat(:,2),tau);
-#     amp_cr(cntr)=corr;
-#     amp_cr_err(cntr)=corr_err;
 plt.figure()
 plt.plot(sample_times, out[0,:], label = 'H')
 plt.plot(sample_times, out[1,:], label= 'L')
