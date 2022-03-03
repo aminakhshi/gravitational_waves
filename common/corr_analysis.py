@@ -526,7 +526,7 @@ def match_pair(event_name, data, fs_ref=4096., save_out = True, local_path = Non
                 os.makedirs(event_folder)
                 
     # download source files
-    with open("linksDict", "rb") as file:
+    with open("linksDict_soumi", "rb") as file:
         get_link = pickle.load(file)
     link_ligo = get_link[event_name]
 
