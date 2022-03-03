@@ -7,12 +7,14 @@ from common.wienerseries import Wiener_class
 from common.utils import *        
 from common.get_extraction import wiener_filter
 
+from common.corr_analysis import match_pair
+
 
 merger_name = 'GW150914'
 
 data = gwseries(merger_name = merger_name)
 data = Wiener_class(data, fs = None, nfft = None, nperseg = None, noverlap = None, 
-                  window = 'hann', filt_type = 'hrnr')
+                    window = 'hann', filt_type = 'hrnr')
 ## TODO: the wiener function should be replaced by a class for automatic search
 fs = data.fs
 merger_time = data.merger_time
@@ -38,6 +40,26 @@ else:
 
 out = wiener_filter(strain, noise, fs = 4096, nfft = None, nperseg = None, noverlap = None, 
              window = 'hann', filt_type = 'hrnr', axis = -1)
+
+first_run = ['GW150914', 'GW151012', 'GW151226']
+second_run = ['GW170104', 'GW170608', 'GW170729',
+              'GW170809', 'GW170814', 'GW170818', 'GW170823']
+third_run = ['GW190412', 'GW190814', 'GW190521']
+###
+events_key = first_run + second_run + third_run
+events_val = [['GW150914.txt', []], ['GW151012.txt', []],
+              ['GW151226.txt', []], ['GW170104.txt', []],
+              ['GW170608.txt', []], ['GW170729.txt', []],
+              ['GW170809.txt', []], ['GW170814.txt', []],
+              ['GW170818.txt', []], ['GW170823.txt', []],
+              ['GW190412.txt', []], ['GW190814.txt', []],
+              ['GW190521.txt', []]]
+events_ = dict(zip(events_key, events_val))
+###
+strain_file_name = events_[merger_name][0]
+file_to_eval = np.genfromtxt(f'./results/{strain_file_name}')
+out_ = match_pair(merger_name, file_to_eval)
+# out_ = match(event_name, out)
 
 # tau_max=0.02;
 # t_vec = np.arange(-np.fix(tau_max*fs).astype(int),np.fix(tau_max*fs).astype(int))/fs

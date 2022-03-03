@@ -221,3 +221,32 @@ def time_slice(timeseries, start, end, mode='floor'):
         raise ValueError("Invalid mode: {}".format(mode))
 
     return timeseries[start_idx:end_idx]
+
+def p_corr(x, y, tau):
+
+    if len(x) != len(y):
+        print("The arrays must be of the same length!")
+        return
+
+    if tau > 0:
+        x = x[:-tau]
+        y = y[tau:]
+    elif tau != 0:
+        x = x[np.abs(tau):]
+        y = y[:-np.abs(tau)]
+
+    n = len(x)
+
+    x = x - np.mean(x)
+    y = y - np.mean(y)
+
+    std_x = np.std(x)
+    std_y = np.std(y)
+
+    cov = np.sum(x * y) / (n - 1)
+    cr = cov / (std_x * std_y)
+    cr_err = np.std(x * y) / (np.sqrt(n) * std_x * std_y) \
+             + cr * (np.std(x ** 2) / (2 * std_x ** 2)
+                     + np.std(y ** 2) / (2 * std_y ** 2)) / np.sqrt(n)
+
+    return cr, cr_err
