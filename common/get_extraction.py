@@ -3,47 +3,31 @@ from scipy import signal
 import math
 
 def nexpow2(x):
+    """
+    :param x:
+    :return:
+    """
     return 1 if x == 0 else 2**math.ceil(math.log2(x))
 
-def rolling_window(data, window_len, noverlap=1, padded=False, axis=-1, copy=True):
+def rolling_window(data, window_len, noverlap=1, axis=-1, padded=False, copy=True):
     """
     Calculate a rolling window over a data
-    Parameters
-    ----------
-    data : numpy array
-        The array to be slided over.
-    window_len : int
-        The rolling window size
-    noverlap : int
-        The rolling window stepsize. Defaults to 1.
-    axis : int
-        The axis to roll over. Defaults to the last axis.
-    copy : bool
-        Return strided array as copy to avoid sideffects when manipulating the
+    :param data: numpy array. The array to be slided over.
+    :param window_len: int. The rolling window size
+    :param noverlap: int. The rolling window stepsize. Defaults to 1.
+    :param padded:
+    :param axis: int. The axis to roll over. Defaults to the last axis.
+    :param copy: bool. Return strided array as copy to avoid sideffects when manipulating the
         output array.
-    Returns
-    -------
-    data : numpy array
+    :return:
+    numpy array
         A matrix where row in last dimension consists of one instance
         of the rolling window.
-    Notes
-    -----
-    - Be wary of setting `copy` to `False` as undesired sideffects with the
-      output values may occurr.
-    Examples
-    --------
-    >>> a = np.array([1, 2, 3, 4, 5])
-    >>> rolling_window(a, window_len=3)
-    array([[1, 2, 3],
-           [2, 3, 4],
-           [3, 4, 5]])
-    >>> rolling_window(a, window_len=3, noverlap=2)
-    array([[1, 2, 3],
-           [3, 4, 5]])
     See Also
     --------
     pieces : Calculate number of pieces available by rolling
     """
+
     data = data if isinstance(data, np.ndarray) else np.array(data)
     assert axis < data.ndim, "Array dimension is less than axis"
     assert noverlap >= 1, "Minimum overlap cannot be less than 1"
@@ -67,14 +51,18 @@ def rolling_window(data, window_len, noverlap=1, padded=False, axis=-1, copy=Tru
         return strided
 
 def gain_control(gain, constraint_len, window = 'hann', axis = -1):
-    # =============================================================================
     """
     This function gets the gain and applies a constraint on the impulse repsonse
     to satisfy the linear convolution property. This will overcome the time-aliasing
-    problem. 
-    Described in P. Scalart (2008)
-    =============================================================================
+    problem.
+    Ref: P. Scalart (2008)
+    :param gain:
+    :param constraint_len:
+    :param window:
+    :param axis:
+    :return:
     """
+
     gain_mean = np.mean(gain, axis = axis)
     nfft = gain.shape[axis]
     l2 = np.fix(constraint_len/2).astype(int)
@@ -91,17 +79,34 @@ def gain_control(gain, constraint_len, window = 'hann', axis = -1):
 
 def moving_average(array, w : int = 5, axis = -1):
     """
-    Moving average smoothing of an array, (i.e. activity level)  for smoothing the noisy fluctuations
-    :param activities: activity level array, shape: [n_packets]
-    :param w: number of packets for averaging window, constant, default = 5
-    :return: smooth activity level (the number of w first packets are zero, averaging starts after the "w" first pkts)
+    Moving average smoothing of an array for smoothing the noisy fluctuations
+    :param array: numpy array. The array to be smoothed over.
+    :param w: int. number of points for averaging window, constant, default = 5
+    :param axis:
+    :return:
+    smooth data array (the number of w first points are zero, averaging starts after the "w" first points)
     """
+
     mov_mean = np.cumsum(array, axis = axis)
     mov_mean[:, w:] = mov_mean[:, w:] - mov_mean[:, :-w]
     return mov_mean/w
 
 def wiener_filter(strain, noise, fs = 4096, nfft = None, nperseg = None, noverlap = None, 
              window = 'hann', filt_type = 'hrnr', smooth = True, axis = -1):
+    """
+
+    :param strain:
+    :param noise:
+    :param fs:
+    :param nfft:
+    :param nperseg:
+    :param noverlap:
+    :param window:
+    :param filt_type:
+    :param smooth:
+    :param axis:
+    :return:
+    """
     if strain.shape[0] > strain.shape[-1]:
         strain = strain.T
         noise = noise.T
@@ -152,6 +157,7 @@ def wiener_filter(strain, noise, fs = 4096, nfft = None, nperseg = None, noverla
         fft_slice = np.fft.fft(strain_slice[:, count, :]*window, nfft, axis = axis)
         strain_amplitude[:, :, count] = abs(fft_slice)
         strain_phase[:, :, count] = np.angle(fft_slice)
+        ## TODO: @Amin add the noise estimation on a network of arrays and update the algorithm
         if count == 0:
             noise_psd[:, :, count] = init_noise
             priori_snr = np.zeros_like(init_noise)
@@ -179,15 +185,14 @@ def wiener_filter(strain, noise, fs = 4096, nfft = None, nperseg = None, noverla
         two-step noise reduction (TSNR) algorithm
         Ref: Plapous et al (2004, May), A two-step noise reduction technique. 
         DOI: 10.1109/ICASSP.2004.1325979
-            
         """
-        
+
         tsnr_post = new_amplitude / noise_psd[:, :, count]
         gain_tsnr = tsnr_post / (tsnr_post + 1)  
         # wiener gain function for estimation of tSNR 
         tsnr_amplitude[:, :, count] = gain_tsnr
-        # for idx in range(num_detector):
-        #     gain_tsnr[idx, :] = gain_control(gain_tsnr[idx, :], constraint_len = (nfft//2))
+        for idx in range(num_detector):
+            gain_tsnr[idx, :] = gain_control(gain_tsnr[idx, :], constraint_len = (nfft//2))
         
         new_amplitude = gain_tsnr * new_amplitude
         # update priori_snr for the next frame

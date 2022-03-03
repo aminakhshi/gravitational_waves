@@ -2,12 +2,21 @@ from pycbc import catalog
 import pickle
 import numpy 
 def get_gwseries(merger, detector : str, fs = 4096, duration = 32):
-    # , fpass = 'high',
-    #  notch = False, whiten = True, copy = False):
-    # assert merger, "Merger object is not valid"
-    # assert fs, "sampling rate is not defined"
-    # assert duration, "duration is not defined"
-    # assert detector, "detector is not defined"
+    """
+    This function takes the information related to a merger event and
+    returns the raw data and std associated with that event
+    :param merger: str. The name of merger event in simple format . Example: 'GW150914'
+    :param detector: str. The detector name in simple format . Example: 'H1', or 'L1'
+    :param fs: float. sampling frequency in Hz (4096 or 16384)
+    :param duration: int. Duration time in seconds
+    :return:
+    raw_data: gw TimeSeries class associated with that event
+    raw_std: standard deviation of the array
+    """
+    assert merger, "Merger object is not valid"
+    assert fs, "sampling rate is not defined"
+    assert duration, "duration is not defined"
+    assert detector, "detector is not defined"
     raw_data = merger.strain(detector, duration = duration, sample_rate = fs)
     raw_std = numpy.std(raw_data)
     return raw_data, raw_std    
@@ -17,16 +26,20 @@ class gwseries(object):
     Pre-processed class for a specific merger
     Parameters
     ----------
-    merger_name: str
-    The name (GW simple fomrat date) of the merger event.
-    fs : sampling frequency in Hz
+    merger_name:
+
+
     duration: duration time in sec
     _opts: 
     """   
     def __init__(self, merger_name: str, fs = None, duration = None, _opts = None):
+        """
+        :param merger_name: str.The name (GW simple fomrat date) of the merger event.
+        :param fs: sampling frequency in Hz
+        :param duration: int. Duration time in seconds
+        :param _opts:
+        """
 
-        # for key, val in _opts:
-        #     setattr(self, key, self.key)
         get_source = merger_name.split('GW')[1]
         if get_source.startswith(('15', '17')):
             m = catalog.Merger(merger_name, source='gwtc-1')

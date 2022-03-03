@@ -11,6 +11,13 @@ import os
 from pycbc import pnutils
 
 def match_pair_v1(event_name, data, fs_ref=4096.):
+    """
+
+    :param event_name:
+    :param data:
+    :param fs_ref:
+    :return:
+    """
 
     first_run = ['GW150914', 'GW151012', 'GW151226']
     second_run = ['GW170104', 'GW170608', 'GW170729',
@@ -19,6 +26,7 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
 
     # download source files
     get_path = os.getcwd()
+    # lines 787, 901, 902, 1023, 1039
 
     with open(os.path.join(get_path, "linksDict"), "rb") as file:
         get_link = pickle.load(file)
@@ -483,6 +491,13 @@ def match_pair_v1(event_name, data, fs_ref=4096.):
     return to_save
 
 def match_pair(event_name, data, fs_ref=4096.):
+    """
+
+    :param event_name:
+    :param data:
+    :param fs_ref:
+    :return:
+    """
 
     # local_path = ?
     # lines 787, 901, 902, 1023, 1039

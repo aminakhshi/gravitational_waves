@@ -3,15 +3,32 @@ import math
 from scipy import signal
 
 def get_slice(strain, merger_time, window_size = None, step = 1, axis = -1):
+    """
+
+    :param strain:
+    :param merger_time:
+    :param window_size:
+    :param step:
+    :param axis:
+    :return:
+    """
     if not window_size:
         fs = 4096
         window_size = 2 * fs
-    # for ifo, val in enumerate(strain):
     bound_low = np.floor(merger_time - np.floor(window_size/2)).astype(int)
     bound_up = np.floor(merger_time + np.floor(window_size/2)).astype(int)
     return strain.take(indices=range(bound_low, bound_up, step), axis=axis)
 
 def get_slice_noise(strain, merger_time, cut_window = None, step = 1, axis = -1):
+    """
+
+    :param strain:
+    :param merger_time:
+    :param cut_window:
+    :param step:
+    :param axis:
+    :return:
+    """
     if not cut_window:
         fs = 4096
         cut_window = [9*fs, 1*fs]
@@ -19,46 +36,29 @@ def get_slice_noise(strain, merger_time, cut_window = None, step = 1, axis = -1)
     bound_low = np.floor(merger_time - cut_window[0]).astype(int)
     bound_up = np.floor(merger_time - cut_window[-1]).astype(int)
     return strain.take(indices=range(bound_low, bound_up, step), axis=axis)
-# strain[:, bound_low:bound_up]
 
 def nexpow2(x):
+    """
+
+    :param x:
+    :return:
+    """
     return 1 if x == 0 else 2**math.ceil(math.log2(x))
 
 def rolling_window(data, window_len, noverlap=1, padded=False, axis=-1, copy=True):
     """
     Calculate a rolling window over a data
-    Parameters
-    ----------
-    data : numpy array
-        The array to be slided over.
-    window_len : int
-        The rolling window size
-    noverlap : int
-        The rolling window stepsize. Defaults to 1.
-    axis : int
-        The axis to roll over. Defaults to the last axis.
-    copy : bool
-        Return strided array as copy to avoid sideffects when manipulating the
+    :param data: numpy array. The array to be slided over.
+    :param window_len: int. The rolling window size
+    :param noverlap: int. The rolling window stepsize. Defaults to 1.
+    :param padded:
+    :param axis: int. The axis to roll over. Defaults to the last axis.
+    :param copy: bool. Return strided array as copy to avoid sideffects when manipulating the
         output array.
-    Returns
-    -------
-    data : numpy array
+    :return:
+    numpy array
         A matrix where row in last dimension consists of one instance
         of the rolling window.
-    Notes
-    -----
-    - Be wary of setting `copy` to `False` as undesired sideffects with the
-      output values may occurr.
-    Examples
-    --------
-    >>> a = np.array([1, 2, 3, 4, 5])
-    >>> rolling_window(a, window_len=3)
-    array([[1, 2, 3],
-           [2, 3, 4],
-           [3, 4, 5]])
-    >>> rolling_window(a, window_len=3, noverlap=2)
-    array([[1, 2, 3],
-           [3, 4, 5]])
     See Also
     --------
     pieces : Calculate number of pieces available by rolling
@@ -84,7 +84,41 @@ def rolling_window(data, window_len, noverlap=1, padded=False, axis=-1, copy=Tru
         return strided.copy()
     else:
         return strided
-    
+
+def p_corr(x, y, tau):
+    """
+    :param x:
+    :param y:
+    :param tau:
+    :return:
+    """
+    if len(x) != len(y):
+        print("The arrays must be of the same length!")
+        return
+
+    if tau > 0:
+        x = x[:-tau]
+        y = y[tau:]
+    elif tau != 0:
+        x = x[np.abs(tau):]
+        y = y[:-np.abs(tau)]
+
+    n = len(x)
+
+    x = x - np.mean(x)
+    y = y - np.mean(y)
+
+    std_x = np.std(x)
+    std_y = np.std(y)
+
+    cov = np.sum(x * y) / (n - 1)
+    cr = cov / (std_x * std_y)
+    cr_err = np.std(x * y) / (np.sqrt(n) * std_x * std_y) \
+             + cr * (np.std(x ** 2) / (2 * std_x ** 2)
+                     + np.std(y ** 2) / (2 * std_y ** 2)) / np.sqrt(n)
+
+    return cr, cr_err
+
 # =============================================================================
 # Filters taken from pycbc
 # Reference: https://github.com/gwastro/pycbc
@@ -222,31 +256,3 @@ def time_slice(timeseries, start, end, mode='floor'):
 
     return timeseries[start_idx:end_idx]
 
-def p_corr(x, y, tau):
-
-    if len(x) != len(y):
-        print("The arrays must be of the same length!")
-        return
-
-    if tau > 0:
-        x = x[:-tau]
-        y = y[tau:]
-    elif tau != 0:
-        x = x[np.abs(tau):]
-        y = y[:-np.abs(tau)]
-
-    n = len(x)
-
-    x = x - np.mean(x)
-    y = y - np.mean(y)
-
-    std_x = np.std(x)
-    std_y = np.std(y)
-
-    cov = np.sum(x * y) / (n - 1)
-    cr = cov / (std_x * std_y)
-    cr_err = np.std(x * y) / (np.sqrt(n) * std_x * std_y) \
-             + cr * (np.std(x ** 2) / (2 * std_x ** 2)
-                     + np.std(y ** 2) / (2 * std_y ** 2)) / np.sqrt(n)
-
-    return cr, cr_err

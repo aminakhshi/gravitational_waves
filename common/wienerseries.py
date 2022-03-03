@@ -1,20 +1,30 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Feb 27 20:01:41 2022
-
-@author: amin
-"""
 import numpy as np
 from scipy import signal
 import math
 
+## TODO: Complete this class and unify all calculation in this class
+## TODO: Add plotting functions to this class
 def nexpow2(x):
+    """
+
+    :param x:
+    :return:
+    """
     return 1 if x == 0 else 2**math.ceil(math.log2(x))
 
 class Wiener_class(object):
     def __init__(self, gw_array, fs = None, nfft = None, nperseg = None, noverlap = None, 
                  window = 'hann', filt_type = 'hrnr'):
+        """
+
+        :param gw_array:
+        :param fs:
+        :param nfft:
+        :param nperseg:
+        :param noverlap:
+        :param window:
+        :param filt_type:
+        """
         try:
             self.merger_name = gw_array.merger_name
         except:
@@ -64,6 +74,13 @@ class Wiener_class(object):
         self.window = signal.get_window(window, self.nperseg)
     
     def _get_fft(self, cut_sec = None, axis = -1, astype = None):
+        """
+
+        :param cut_sec:
+        :param axis:
+        :param astype:
+        :return:
+        """
         # if not cut_sec:
         strain = list(self.strain.values())
         strain_psd = []
