@@ -1,16 +1,10 @@
 import numpy as np
 from scipy import signal
 import math
+from .utils import nexpow2
 
 ## TODO: Complete this class and unify all calculation in this class
 ## TODO: Add plotting functions to this class
-def nexpow2(x):
-    """
-
-    :param x:
-    :return:
-    """
-    return 1 if x == 0 else 2**math.ceil(math.log2(x))
 
 class Wiener_class(object):
     def __init__(self, gw_array, fs = None, nfft = None, nperseg = None, noverlap = None, 
