@@ -7,7 +7,7 @@ from common.wienerseries import Wiener_class
 from common.utils import *        
 from common.get_extraction import wiener_filter
 
-from common.corr_analysis import match_pair_v1
+from common.corr_analysis import match_pair
 
 
 merger_name = 'GW170814'
@@ -58,7 +58,7 @@ events_ = dict(zip(events_key, events_val))
 ###
 strain_file_name = events_[merger_name][0]
 file_to_eval = np.genfromtxt(f'./results/{strain_file_name}')
-out_ = match_pair_v1(merger_name, file_to_eval)
+out_ = match_pair(merger_name, file_to_eval)
 # out_ = match(event_name, out)
 
 plt.figure()
