@@ -9,6 +9,7 @@ import wget
 import copy
 import os
 from pycbc import pnutils
+import pycbc.detector as det
 
 def match_pair_v1(event_name, data, fs_ref=4096., save_out = True, local_path = None):
     """
