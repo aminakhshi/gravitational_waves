@@ -10,7 +10,7 @@ from common.get_extraction import wiener_filter
 from common.corr_analysis import match_pair
 
 
-merger_name = 'GW170814'
+merger_name = 'GW150914'
 
 data = gwseries(merger_name = merger_name)
 data = Wiener_class(data, fs = None, nfft = None, nperseg = None, noverlap = None, 
